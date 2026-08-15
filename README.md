@@ -1,23 +1,61 @@
 # Qwen3.8 27B q4が生成した日本語プログラミング言語コンパイラ
 
-## 構成
-kotonoha.py            # ラッパー: python3 kotonoha.py prog.koto [-o out.c] [--build] [--run]
-kotonoha/
-  __main__.py          # CLI（進捗は stderr、エラーコード 0/1/2）
-  error.py tokens.py lexer.py ast_nodes.py parser.py types.py checker.py codegen.py
-tests/                 # test_lexer/parser/checker/codegen/e2e
-examples/              # hello factorial loop_sum division ifelse string
+## 与えた指示
 
-## サンプル → C（examples/factorial.koto）
+Ryzen9 3900X, 64GB, RX7900XT, Kubuntu24環境で、6時間自律的に作業した。
+
+与えた指示は以下の通り。
+
+```text
+# 架空言語コンパイラ作成指示
+
+疑似日本語ベースの架空プログラミング言語「ことのは」のコンパイラを作成してください。
+
+言語仕様は以下です。
+
+* 静的型付き
+* 変数宣言: `変数 x: 整数 を 10 とする。`
+* 代入: `x を 20 とする。`
+* 関数: `関数 足す（a: 整数、b: 整数） -> 整数 { 返す a + b。 }`
+* 条件分岐: `もし 条件 ならば { ... } そうでなければ { ... }`
+* ループ: `i を 1 から 10 まで 繰り返す { ... }`
+* `まで` は終端を含む
+* 型: `整数`、`小数`、`文字列`、`論理`、`なし`
+* 真偽値: `真`、`偽`
+* 四則演算と比較演算を使用可能
+* `整数 / 整数` の結果は `小数`
+* 文末は原則 `。`
+* `主処理 { ... }` をエントリーポイントとする
+
+コンパイラは以下を実装してください。
+
+1. 字句解析
+2. 構文解析
+3. AST生成
+4. 基本的な型検査・意味解析
+5. Cコードへの変換
+6. わかりやすいコンパイルエラー
+
+実装言語は任意です。
+
+仕様に書かれていない挙動を勝手に補完せず、必要な場合は明示的な設計判断として分離してください。
+
+最後に、サンプルプログラムと、そのコンパイル結果のCコード、主要なテストケースも示してください。
 ```
+
+### サンプル → C（`examples/factorial.koto`）
+
+```text
 関数 階乗（n: 整数） -> 整数 {
     もし n <= 1 ならば { 返す 1。 }
     返す n * 階乗（n - 1）。
 }
 主処理 { 表示 階乗（5）。 }
 ```
-→
-```
+
+↓
+
+```c
 static long long _f0(long long _v0); // 階乗
 static long long _f0(long long _v0) { // 階乗
     if ((_v0 <= 1LL)) { return 1LL; }
@@ -26,7 +64,28 @@ static long long _f0(long long _v0) { // 階乗
 int main(void) { _f1(); return 0; }
 ```
 
-## 主なテストケース
-- e2e: 各サンプルを CLI → gcc → 実行 → 標準出力完全一致
-- 意味: 1..10 終端含め=55、から>まで は 0 回、再帰・相互呼び出し、5/2=2.5（D19）、シャドーイングは別 C 変数
-- 診断: 未定義の変数「y」（file:1:10 付き）、型不一致、未定義の文字「(」、主処理 欠如、全経路 返す 欠如 → 終了コード 1
+### 構成
+
+* `kotonoha.py` — ラッパー: `python3 kotonoha.py prog.koto [-o out.c] [--build] [--run]`
+* `kotonoha/`
+
+  * `__main__.py` — CLI（進捗は stderr、エラーコード 0/1/2）
+  * `error.py`
+  * `tokens.py`
+  * `lexer.py`
+  * `ast_nodes.py`
+  * `parser.py`
+  * `types.py`
+  * `checker.py`
+  * `codegen.py`
+* `tests/` — `test_lexer/parser/checker/codegen/e2e`
+* `examples/` — `hello factorial loop_sum division ifelse string`
+
+
+### 主なテストケース
+
+* e2e: 各サンプルを CLI → gcc → 実行 → 標準出力完全一致
+* 意味: `1..10` 終端含め = 55、`から > まで` は 0 回、再帰・相互呼び出し、`5/2=2.5`（D19）、シャドーイングは別 C 変数
+* 診断: 未定義の変数「y」（`file:1:10` 付き）、型不一致、未定義の文字「(」、主処理 欠如、全経路 返す 欠如 → 終了コード 1
+
+
