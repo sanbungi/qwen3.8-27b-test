@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+examples/*.c
+examples/hello
+examples/factorial
+examples/loop_sum
+examples/division
+examples/ifelse
+examples/string
